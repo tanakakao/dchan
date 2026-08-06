@@ -108,7 +108,7 @@ export default function App() {
 
         <form id="design" onSubmit={generate}>
           <section className="card">
-            <div className="section-heading"><span className="step">01</span><div><h2>因子を設定</h2><p>実験で変化させる数値またはカテゴリを入力します。</p></div><button className="secondary" type="button" onClick={addFactor}>+　因子を追加</button></div>
+            <div className="section-heading"><span className="step">01</span><div><h2>因子を設定</h2><p>実験で変化させる数値またはカテゴリを入力します。</p></div><button className="secondary" type="button" onClick={addFactor}>+ 因子を追加</button></div>
             <div className="factor-list">
               {factors.map((factor, index) => (
                 <div className="factor-row" key={factor.id}>
@@ -136,7 +136,7 @@ export default function App() {
           </section>
 
           {error && <div className="error" role="alert">{error}</div>}
-          <div className="submit-area"><button className="primary" type="submit" disabled={loading}>{loading ? "計算中..." : "候補点を生成　→"}</button><p>計算に数秒かかる場合があります</p></div>
+          <div className="submit-area"><button className="primary" type="submit" disabled={loading}>{loading ? "計算中..." : "候補点を生成 →"}</button><p>計算に数秒かかる場合があります</p></div>
         </form>
 
         {result && <section id="results" className="card results">

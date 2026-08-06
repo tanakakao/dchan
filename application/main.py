@@ -7,7 +7,6 @@ from functions import OptimalDesign
 
 from .schemas import CandidateRequest, CandidateResponse
 
-
 app = FastAPI(
     title="D-chan API",
     description="最適実験計画の候補点を生成する API です。",
