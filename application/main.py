@@ -1,11 +1,29 @@
 """FastAPI application for generating optimal experimental designs."""
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from functions import OptimalDesign
 
 from .schemas import CandidateRequest, CandidateResponse
+
+_DEFAULT_CORS_ORIGINS = (
+    "http://127.0.0.1:5175",
+    "http://localhost:5175",
+)
+
+
+def _get_cors_origins() -> list[str]:
+    """Return configured browser origins for the dchan frontend.
+
+    Returns:
+        A list of allowed CORS origins.
+    """
+    configured = os.getenv("DCHAN_CORS_ORIGINS", ",".join(_DEFAULT_CORS_ORIGINS))
+    return [origin.strip() for origin in configured.split(",") if origin.strip()]
+
 
 app = FastAPI(
     title="D-chan API",
@@ -15,7 +33,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=_get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
