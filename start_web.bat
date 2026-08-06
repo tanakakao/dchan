@@ -30,7 +30,7 @@ if errorlevel 1 (
 call :resolve_python
 if errorlevel 1 (
     echo [ERROR] Python was not found.
-    echo Create .venv in this repository, or make py/python available on PATH.
+    echo Create .venv, install uv, or make py/python available on PATH.
     echo.
     pause
     exit /b 1
@@ -41,7 +41,7 @@ echo Python: %PYTHON_CMD%
 if errorlevel 1 (
     echo.
     echo [ERROR] Required Python packages are not available.
-    echo Run: %PYTHON_CMD% -m pip install -r requirements.txt
+    echo Run: %INSTALL_CMD%
     echo.
     pause
     exit /b 1
@@ -78,20 +78,32 @@ exit /b 0
 
 :resolve_python
 set "PYTHON_CMD="
+set "INSTALL_CMD="
+
 if exist "%VENV_PYTHON%" (
     set PYTHON_CMD="%VENV_PYTHON%"
+    set INSTALL_CMD="%VENV_PYTHON%" -m pip install -e .
+    exit /b 0
+)
+
+where uv >nul 2>&1
+if not errorlevel 1 (
+    set "PYTHON_CMD=uv run python"
+    set "INSTALL_CMD=uv sync"
     exit /b 0
 )
 
 where py >nul 2>&1
 if not errorlevel 1 (
     set "PYTHON_CMD=py -3"
+    set "INSTALL_CMD=py -3 -m pip install -e ."
     exit /b 0
 )
 
 where python >nul 2>&1
 if not errorlevel 1 (
     set "PYTHON_CMD=python"
+    set "INSTALL_CMD=python -m pip install -e ."
     exit /b 0
 )
 
