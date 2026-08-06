@@ -2,8 +2,8 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from functions import OptimalDesign
 
+from functions import OptimalDesign
 from .schemas import CandidateRequest, CandidateResponse
 
 
