@@ -177,7 +177,7 @@ exit /b 1
 cd /d "%~dp0"
 echo ========================================
 echo dchan FastAPI backend
- echo ========================================
+echo ========================================
 echo.
 
 call :resolve_python
