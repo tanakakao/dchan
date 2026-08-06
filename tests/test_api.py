@@ -1,8 +1,7 @@
 """Tests for the FastAPI optimal-design endpoints."""
 
-from fastapi.testclient import TestClient
-
 from application.main import app
+from fastapi.testclient import TestClient
 
 
 client = TestClient(app)
