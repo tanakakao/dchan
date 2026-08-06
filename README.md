@@ -24,6 +24,18 @@ cd frontend
 npm install
 ```
 
+## Windows で Web アプリをまとめて起動
+
+リポジトリ直下の `start_web.bat` をダブルクリックすると、FastAPI と React フロントエンドを別ウィンドウで起動できます。
+
+- FastAPI: `http://127.0.0.1:8000`
+- React: `http://localhost:5173`
+- Health check: `http://127.0.0.1:8000/health`
+
+ランチャーは FastAPI の起動完了を最大 60 秒待ってから React を起動します。`frontend/node_modules` がない場合は `npm install` を自動実行します。
+
+Python はリポジトリ直下の `.venv` を優先し、存在しない場合は Windows の `py -3` または `python` を使用します。必要な Python パッケージがない場合は、表示されたコマンドで `requirements.txt` をインストールしてください。
+
 ## FastAPI の起動
 
 ```bash
