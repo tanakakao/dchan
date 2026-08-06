@@ -1,6 +1,7 @@
 """FastAPI application for generating optimal experimental designs."""
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from functions import OptimalDesign
 
@@ -11,6 +12,14 @@ app = FastAPI(
     title="D-chan API",
     description="最適実験計画の候補点を生成する API です。",
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
