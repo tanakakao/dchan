@@ -15,7 +15,8 @@ type CandidateResponse = {
   correlations: Record<string, Record<string, number | null>>;
 };
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8002";
+const API_HOST = API_URL.replace(/^https?:\/\//, "");
 const initialFactors: Factor[] = [
   { id: 1, name: "Temperature", kind: "numeric", lower: "20", upper: "100", step: "10", levels: "" },
   { id: 2, name: "Time", kind: "numeric", lower: "1", upper: "10", step: "1", levels: "" },
@@ -100,7 +101,7 @@ export default function App() {
           <a href="#results"><span>▦</span> 生成結果</a>
           <a href="#guide"><span>○</span> 使い方</a>
         </nav>
-        <div className="sidebar-note"><b>API status</b><span><i /> localhost:8000</span></div>
+        <div className="sidebar-note"><b>API status</b><span><i /> {API_HOST}</span></div>
       </aside>
 
       <main id="top">
