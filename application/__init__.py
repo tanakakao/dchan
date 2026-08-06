@@ -1,5 +1,5 @@
-from .main import main
+"""FastAPI application exports."""
 
-__all__ = [
-    "main"
-]
+from .main import app
+
+__all__ = ["app"]
