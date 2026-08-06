@@ -15,3 +15,13 @@
 
 ```bash
 pip install -r requirements.txt
+```
+
+## FastAPI の起動
+
+```bash
+uvicorn application.main:app --host 0.0.0.0 --port 8000
+```
+
+起動後は `http://localhost:8000/docs` から API の仕様確認と実行ができます。
+実験計画の候補点は `POST /optimal-design/candidate` で生成します。
