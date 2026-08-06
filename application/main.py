@@ -4,8 +4,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from functions import OptimalDesign
-from .schemas import CandidateRequest, CandidateResponse
 
+from .schemas import CandidateRequest, CandidateResponse
 
 app = FastAPI(
     title="D-chan API",
