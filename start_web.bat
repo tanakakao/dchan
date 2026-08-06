@@ -1,13 +1,16 @@
 @echo off
 setlocal EnableExtensions
 
-rem Fixed ports for the dchan development web application.
+rem Dedicated ports for dchan. bochan uses 8000/5173 and malchan uses 8001/5174.
 set "BACKEND_HOST=127.0.0.1"
-set "BACKEND_PORT=8000"
-set "FRONTEND_HOST=localhost"
-set "FRONTEND_PORT=5173"
-set "HEALTH_URL=http://%BACKEND_HOST%:%BACKEND_PORT%/health"
-set "VITE_API_URL=http://%BACKEND_HOST%:%BACKEND_PORT%"
+set "BACKEND_PORT=8002"
+set "FRONTEND_HOST=127.0.0.1"
+set "FRONTEND_PORT=5175"
+set "BACKEND_URL=http://%BACKEND_HOST%:%BACKEND_PORT%"
+set "FRONTEND_URL=http://%FRONTEND_HOST%:%FRONTEND_PORT%"
+set "HEALTH_URL=%BACKEND_URL%/health"
+set "VITE_API_URL=%BACKEND_URL%"
+set "DCHAN_CORS_ORIGINS=%FRONTEND_URL%,http://localhost:%FRONTEND_PORT%"
 set "VENV_PYTHON=%~dp0.venv\Scripts\python.exe"
 
 if /i "%~1"=="backend" goto backend
@@ -16,6 +19,9 @@ if /i "%~1"=="frontend" goto frontend
 echo ========================================
 echo dchan Web launcher
 echo ========================================
+echo.
+echo Frontend: %FRONTEND_URL%
+echo Backend : %BACKEND_URL%
 echo.
 
 where npm >nul 2>&1
@@ -47,7 +53,27 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Starting dchan backend at http://%BACKEND_HOST%:%BACKEND_PORT% ...
+call :ensure_port_available %BACKEND_PORT%
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Backend port %BACKEND_PORT% is already in use.
+    echo Close the process using %BACKEND_URL% and run this launcher again.
+    echo.
+    pause
+    exit /b 1
+)
+
+call :ensure_port_available %FRONTEND_PORT%
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Frontend port %FRONTEND_PORT% is already in use.
+    echo Close the process using %FRONTEND_URL% and run this launcher again.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Starting dchan backend at %BACKEND_URL% ...
 start "dchan backend" /D "%~dp0" cmd.exe /k ""%~f0" backend"
 
 echo Waiting for FastAPI to become ready...
@@ -63,13 +89,30 @@ if errorlevel 1 (
 )
 
 echo FastAPI is ready.
-echo Starting dchan frontend at http://%FRONTEND_HOST%:%FRONTEND_PORT% ...
+echo Starting dchan frontend at %FRONTEND_URL% ...
 start "dchan frontend" /D "%~dp0frontend" cmd.exe /k ""%~f0" frontend"
 
+echo Waiting for React to become ready...
+call :wait_for_frontend
+if errorlevel 1 (
+    echo.
+    echo [ERROR] dchan React frontend did not become ready within 60 seconds.
+    echo Check the dchan frontend window for the npm or Vite error.
+    echo The browser was not opened.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo React is ready.
+echo Opening %FRONTEND_URL% in the default browser...
+start "" "%FRONTEND_URL%"
+
 echo.
-echo Startup windows were opened.
-echo Frontend: http://%FRONTEND_HOST%:%FRONTEND_PORT%
-echo Backend : http://%BACKEND_HOST%:%BACKEND_PORT%
+echo Startup completed.
+echo Frontend: %FRONTEND_URL%
+echo Backend : %BACKEND_URL%
+echo API docs: %BACKEND_URL%/docs
 echo Health  : %HEALTH_URL%
 echo.
 echo Press any key to close only this launcher window.
@@ -109,9 +152,22 @@ if not errorlevel 1 (
 
 exit /b 1
 
+:ensure_port_available
+powershell.exe -NoProfile -Command "$connection = Get-NetTCPConnection -State Listen -LocalPort %~1 -ErrorAction SilentlyContinue; if ($null -ne $connection) { exit 1 }; exit 0" >nul 2>&1
+if errorlevel 1 exit /b 1
+exit /b 0
+
 :wait_for_backend
 for /L %%I in (1,1,60) do (
     powershell.exe -NoProfile -Command "try { $response = Invoke-WebRequest -UseBasicParsing -Uri '%HEALTH_URL%' -TimeoutSec 2; if ($response.StatusCode -eq 200) { exit 0 } } catch {}; exit 1" >nul 2>&1
+    if not errorlevel 1 exit /b 0
+    timeout /t 1 /nobreak >nul
+)
+exit /b 1
+
+:wait_for_frontend
+for /L %%I in (1,1,60) do (
+    powershell.exe -NoProfile -Command "try { $response = Invoke-WebRequest -UseBasicParsing -Uri '%FRONTEND_URL%' -TimeoutSec 2; if ($response.StatusCode -eq 200) { exit 0 } } catch {}; exit 1" >nul 2>&1
     if not errorlevel 1 exit /b 0
     timeout /t 1 /nobreak >nul
 )

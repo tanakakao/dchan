@@ -10,6 +10,16 @@ D-chan は、D最適化などの基準を用いて実験計画の候補点を生
 
 プロジェクトの既定Pythonバージョンは `.python-version` で3.12に設定しています。
 
+## 使用ポート
+
+bochan、malchanとの競合を避けるため、dchanでは次の専用ポートを使用します。
+
+| アプリ | Backend | Frontend |
+| --- | ---: | ---: |
+| bochan | 8000 | 5173 |
+| malchan | 8001 | 5174 |
+| dchan | 8002 | 5175 |
+
 ## Python環境のセットアップ
 
 依存関係は `pyproject.toml` で管理しています。
@@ -46,14 +56,22 @@ APIのURLを手動で設定する場合は、`frontend/.env.example` を `.env.l
 
 ## WindowsでWebアプリをまとめて起動
 
-リポジトリ直下の `start_web.bat` をダブルクリックすると、FastAPIとReactフロントエンドを別ウィンドウで起動できます。
+リポジトリ直下の `start_web.bat` をダブルクリックすると、FastAPIとReactフロントエンドを別ウィンドウで起動します。
 
-- FastAPI: `http://127.0.0.1:8000`
-- APIドキュメント: `http://127.0.0.1:8000/docs`
-- React: `http://localhost:5173`
-- Health check: `http://127.0.0.1:8000/health`
+- FastAPI: `http://127.0.0.1:8002`
+- APIドキュメント: `http://127.0.0.1:8002/docs`
+- React: `http://127.0.0.1:5175`
+- Health check: `http://127.0.0.1:8002/health`
 
-ランチャーはFastAPIの起動完了を最大60秒待ってからReactを起動します。`frontend/node_modules` がない場合は `npm install` を自動実行します。
+ランチャーは次の順序で処理します。
+
+1. Python、npm、必要なPythonパッケージを確認
+2. 8002番と5175番ポートが空いていることを確認
+3. FastAPIを起動し、`/health` の応答を待機
+4. React／Viteを起動し、画面のHTTP応答を待機
+5. 起動成功後、`http://127.0.0.1:5175` を既定ブラウザで自動的に開く
+
+`frontend/node_modules` がない場合は `npm install` を自動実行します。起動に失敗した場合は、バックエンドまたはフロントエンドのコマンドウィンドウにエラーを残します。
 
 Pythonコマンドは次の順序で選択します。
 
@@ -67,7 +85,7 @@ Pythonコマンドは次の順序で選択します。
 ### FastAPI
 
 ```bash
-uv run python -m uvicorn application.main:app --reload --host 127.0.0.1 --port 8000
+uv run python -m uvicorn application.main:app --reload --host 127.0.0.1 --port 8002
 ```
 
 実験計画の候補点は `POST /optimal-design/candidate` で生成します。
@@ -81,7 +99,7 @@ cd frontend
 npm run dev
 ```
 
-`http://localhost:5173` で因子の設定、候補点の生成、結果のCSV保存ができます。
+Viteの既定URLは `http://127.0.0.1:5175` です。因子の設定、候補点の生成、結果のCSV保存ができます。
 
 ## テストと静的チェック
 
