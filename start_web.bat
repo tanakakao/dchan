@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableExtensions
 
-rem Dedicated ports for dchan. bochan uses 8000/5173, malchan uses 8001/5174, and cauchan uses frontend 5175.
+rem Dedicated ports for dchan. bochan uses 8001/5173, malchan uses 8002/5174, and cauchan uses 8003/5175.
 set "BACKEND_HOST=127.0.0.1"
-set "BACKEND_PORT=8002"
+set "BACKEND_PORT=8004"
 set "FRONTEND_HOST=127.0.0.1"
 set "FRONTEND_PORT=5176"
 set "BACKEND_URL=http://%BACKEND_HOST%:%BACKEND_PORT%"
