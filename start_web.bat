@@ -24,10 +24,11 @@ echo Frontend: %FRONTEND_URL%
 echo Backend : %BACKEND_URL%
 echo.
 
-where npm >nul 2>&1
+where pnpm >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] npm was not found on PATH.
-    echo Install Node.js and make sure npm is available.
+    echo [ERROR] pnpm was not found on PATH.
+    echo Install pnpm and make sure it is available.
+    echo The required version is pinned in frontend\package.json.
     echo.
     pause
     exit /b 1
@@ -97,7 +98,7 @@ call :wait_for_frontend
 if errorlevel 1 (
     echo.
     echo [ERROR] dchan React frontend did not become ready within 60 seconds.
-    echo Check the dchan frontend window for the npm or Vite error.
+    echo Check the dchan frontend window for the pnpm or Vite error.
     echo The browser was not opened.
     echo.
     pause
@@ -206,25 +207,26 @@ echo dchan React frontend
 echo ========================================
 echo.
 
-where npm >nul 2>&1
+where pnpm >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] npm was not found on PATH.
+    echo [ERROR] pnpm was not found on PATH.
+    echo The required version is pinned in package.json.
     pause
     exit /b 1
 )
 
-if not exist "node_modules" (
-    echo node_modules was not found. Running npm install...
-    call npm install
+if not exist "node_modules\.pnpm" (
+    echo pnpm-managed node_modules was not found. Running pnpm install --frozen-lockfile...
+    call pnpm install --frozen-lockfile
     if errorlevel 1 (
         echo.
-        echo [ERROR] npm install failed.
+        echo [ERROR] pnpm install failed.
         pause
         exit /b 1
     )
 )
 
-call npm run dev -- --host %FRONTEND_HOST% --port %FRONTEND_PORT% --strictPort
+call pnpm run dev -- --host %FRONTEND_HOST% --port %FRONTEND_PORT% --strictPort
 set "FRONTEND_EXIT=%ERRORLEVEL%"
 echo.
 echo [ERROR] dchan frontend stopped. Exit code: %FRONTEND_EXIT%
