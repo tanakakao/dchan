@@ -12,7 +12,9 @@ set "HEALTH_URL=%BACKEND_URL%/health"
 set "VITE_API_URL=%BACKEND_URL%"
 set "DCHAN_CORS_ORIGINS=%FRONTEND_URL%,http://localhost:%FRONTEND_PORT%"
 set "VENV_PYTHON=%~dp0.venv\Scripts\python.exe"
+set "LOCK_FILE=%~dp0uv.lock"
 
+if /i "%~1"=="check" goto check
 if /i "%~1"=="backend" goto backend
 if /i "%~1"=="frontend" goto frontend
 
@@ -34,21 +36,14 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call :resolve_python
-if errorlevel 1 (
-    echo [ERROR] Python was not found.
-    echo Create .venv, install uv, or make py/python available on PATH.
-    echo.
-    pause
-    exit /b 1
-)
+call :ensure_python_environment
+if errorlevel 1 exit /b 1
 
-echo Python: %PYTHON_CMD%
-%PYTHON_CMD% -c "import fastapi, numpy, pandas, uvicorn" >nul 2>&1
+echo Python: %VENV_PYTHON%
+"%VENV_PYTHON%" -c "import fastapi, numpy, pandas, uvicorn" >nul 2>&1
 if errorlevel 1 (
     echo.
-    echo [ERROR] Required Python packages are not available.
-    echo Run: %INSTALL_CMD%
+    echo [ERROR] Required Python packages are not available after uv sync.
     echo.
     pause
     exit /b 1
@@ -120,38 +115,48 @@ echo Press any key to close only this launcher window.
 pause >nul
 exit /b 0
 
-:resolve_python
-set "PYTHON_CMD="
-set "INSTALL_CMD="
+:check
+if not "%BACKEND_HOST%"=="127.0.0.1" exit /b 1
+if not "%BACKEND_PORT%"=="8004" exit /b 1
+if not "%FRONTEND_HOST%"=="127.0.0.1" exit /b 1
+if not "%FRONTEND_PORT%"=="5176" exit /b 1
+if not exist "%LOCK_FILE%" exit /b 1
+echo dchan launcher configuration is valid.
+exit /b 0
 
+:ensure_python_environment
+if not exist "%LOCK_FILE%" (
+    echo [ERROR] uv.lock was not found.
+    echo Run uv lock intentionally when dependency declarations change.
+    pause
+    exit /b 1
+)
 if exist "%VENV_PYTHON%" (
-    set PYTHON_CMD="%VENV_PYTHON%"
-    set INSTALL_CMD="%VENV_PYTHON%" -m pip install -e .
-    exit /b 0
+    "%VENV_PYTHON%" -c "import fastapi, numpy, pandas, uvicorn" >nul 2>&1
+    if not errorlevel 1 exit /b 0
+    echo Required packages are missing or incompatible in .venv.
 )
-
 where uv >nul 2>&1
-if not errorlevel 1 (
-    set "PYTHON_CMD=uv run python"
-    set "INSTALL_CMD=uv sync"
-    exit /b 0
+if errorlevel 1 (
+    echo [ERROR] The locked dchan environment must be restored with uv.
+    echo Install uv and run: uv sync --locked
+    pause
+    exit /b 1
 )
-
-where py >nul 2>&1
-if not errorlevel 1 (
-    set "PYTHON_CMD=py -3"
-    set "INSTALL_CMD=py -3 -m pip install -e ."
-    exit /b 0
+pushd "%~dp0"
+echo Synchronizing dchan from uv.lock...
+uv sync --locked
+set "SYNC_EXIT=%ERRORLEVEL%"
+popd
+if not "%SYNC_EXIT%"=="0" (
+    echo [ERROR] uv sync --locked failed.
+    exit /b 1
 )
-
-where python >nul 2>&1
-if not errorlevel 1 (
-    set "PYTHON_CMD=python"
-    set "INSTALL_CMD=python -m pip install -e ."
-    exit /b 0
+if not exist "%VENV_PYTHON%" (
+    echo [ERROR] uv sync completed without creating .venv\Scripts\python.exe.
+    exit /b 1
 )
-
-exit /b 1
+exit /b 0
 
 :ensure_port_available
 powershell.exe -NoProfile -Command "$connection = Get-NetTCPConnection -State Listen -LocalPort %~1 -ErrorAction SilentlyContinue; if ($null -ne $connection) { exit 1 }; exit 0" >nul 2>&1
@@ -180,19 +185,9 @@ echo ========================================
 echo dchan FastAPI backend
 echo ========================================
 echo.
-
-call :resolve_python
-if errorlevel 1 (
-    echo [ERROR] Python was not found.
-    pause
-    exit /b 1
-)
-
-echo Using Python command:
-echo %PYTHON_CMD%
-echo.
-%PYTHON_CMD% -m uvicorn application.main:app --reload --host %BACKEND_HOST% --port %BACKEND_PORT%
-
+call :ensure_python_environment
+if errorlevel 1 exit /b 1
+"%VENV_PYTHON%" -m uvicorn application.main:app --reload --host %BACKEND_HOST% --port %BACKEND_PORT%
 set "SERVER_EXIT=%ERRORLEVEL%"
 echo.
 echo [ERROR] dchan backend stopped. Exit code: %SERVER_EXIT%
@@ -206,7 +201,6 @@ echo ========================================
 echo dchan React frontend
 echo ========================================
 echo.
-
 where pnpm >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] pnpm was not found on PATH.
@@ -214,7 +208,6 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-
 if not exist "node_modules\.pnpm" (
     echo pnpm-managed node_modules was not found. Running pnpm install --frozen-lockfile...
     call pnpm install --frozen-lockfile
@@ -225,7 +218,6 @@ if not exist "node_modules\.pnpm" (
         exit /b 1
     )
 )
-
 call pnpm run dev -- --host %FRONTEND_HOST% --port %FRONTEND_PORT% --strictPort
 set "FRONTEND_EXIT=%ERRORLEVEL%"
 echo.
